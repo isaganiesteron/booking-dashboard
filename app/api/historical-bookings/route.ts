@@ -1,3 +1,4 @@
+export const maxDuration = 60
 import { NextRequest, NextResponse } from "next/server"
 import splitDateRangeIntoWeeks from "@/app/utils/splitDateRangeIntoWeeks"
 import saveBookingOrders from "@/app/utils/saveBookingOrders"

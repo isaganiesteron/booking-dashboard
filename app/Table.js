@@ -1,63 +1,54 @@
+import { useState, useEffect } from "react"
 import { PencilIcon } from "@heroicons/react/24/solid"
 import { ArrowDownTrayIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline"
 import { Card, CardHeader, Typography, Button, CardBody, Chip, CardFooter, Avatar, IconButton, Tooltip, Input } from "@material-tailwind/react"
 
-const TABLE_HEAD = ["Transaction", "Amount", "Date", "Status", "Account", ""]
-
-const TABLE_ROWS = [
-	{
-		img: "https://docs.material-tailwind.com/img/logos/logo-spotify.svg",
-		name: "Spotify",
-		amount: "$2,500",
-		date: "Wed 3:00pm",
-		status: "paid",
-		account: "visa",
-		accountNumber: "1234",
-		expiry: "06/2026",
-	},
-	{
-		img: "https://docs.material-tailwind.com/img/logos/logo-amazon.svg",
-		name: "Amazon",
-		amount: "$5,000",
-		date: "Wed 1:00pm",
-		status: "paid",
-		account: "master-card",
-		accountNumber: "1234",
-		expiry: "06/2026",
-	},
-	{
-		img: "https://docs.material-tailwind.com/img/logos/logo-pinterest.svg",
-		name: "Pinterest",
-		amount: "$3,400",
-		date: "Mon 7:40pm",
-		status: "pending",
-		account: "master-card",
-		accountNumber: "1234",
-		expiry: "06/2026",
-	},
-	{
-		img: "https://docs.material-tailwind.com/img/logos/logo-google.svg",
-		name: "Google",
-		amount: "$1,000",
-		date: "Wed 5:00pm",
-		status: "paid",
-		account: "visa",
-		accountNumber: "1234",
-		expiry: "06/2026",
-	},
-	{
-		img: "https://docs.material-tailwind.com/img/logos/logo-netflix.svg",
-		name: "netflix",
-		amount: "$14,000",
-		date: "Wed 3:30am",
-		status: "cancelled",
-		account: "visa",
-		accountNumber: "1234",
-		expiry: "06/2026",
-	},
-]
+const TABLE_HEAD = ["Booking Date", "Booking ID", "Status", "Country", "Property Name"]
 
 export function BookingsTable() {
+	const [rowCount, setRowCount] = useState(0)
+	const [rows, setRows] = useState([])
+
+	const fetchRows = async (startRow, limit, order) => {
+		console.log("****fetchRows")
+		try {
+			const response = await fetch("/api/fetch-bookings", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ startRow, limit, order }),
+			})
+			const data = await response.json()
+			// setRows((prevRows) => [...prevRows, ...data.rows])
+			setRows(data.rows)
+		} catch (error) {
+			console.log(error)
+		}
+	}
+
+	const fetchRowCount = async () => {
+		console.log("****fetchRowCount")
+		const response = await fetch("/api/fetch-booking-count", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ table: "bookings" }),
+		})
+		const data = await response.json()
+		setRowCount(data.rows[0]?.count)
+	}
+
+	useEffect(() => {
+		fetchRowCount()
+		fetchRows(0, 100, "booking_date desc")
+	}, [])
+
+	useEffect(() => {
+		console.log("****rows", rows)
+	}, [rows])
+
 	return (
 		<Card className="h-full w-full">
 			<CardHeader floated={false} shadow={false} className="rounded-none">
@@ -94,7 +85,42 @@ export function BookingsTable() {
 						</tr>
 					</thead>
 					<tbody>
-						{TABLE_ROWS.map(({ img, name, amount, date, status, account, accountNumber, expiry }, index) => {
+						{rows.length > 0 &&
+							rows.map(({ booking_date, booking_number, status, property_name, country }, index) => {
+								const isLast = index === rows.length - 1
+								const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50"
+
+								return (
+									<tr key={booking_number}>
+										<td className={classes}>
+											<Typography variant="small" color="blue-gray" className="font-bold">
+												{booking_date.split("T")[0]}
+											</Typography>
+										</td>
+										<td className={classes}>
+											<Typography variant="small" color="blue-gray" className="font-normal">
+												{booking_number}
+											</Typography>
+										</td>
+										<td className={classes}>
+											<Typography variant="small" color="blue-gray" className="font-normal">
+												{status}
+											</Typography>
+										</td>
+										<td className={classes}>
+											<Typography variant="small" color="blue-gray" className="font-normal">
+												{country}
+											</Typography>
+										</td>
+										<td className={classes}>
+											<Typography variant="small" color="blue-gray" className="font-normal">
+												{property_name}
+											</Typography>
+										</td>
+									</tr>
+								)
+							})}
+						{/* {TABLE_ROWS.map(({ img, name, amount, date, status, account, accountNumber, expiry }, index) => {
 							const isLast = index === TABLE_ROWS.length - 1
 							const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50"
 
@@ -153,7 +179,7 @@ export function BookingsTable() {
 									</td>
 								</tr>
 							)
-						})}
+						})} */}
 					</tbody>
 				</table>
 			</CardBody>
